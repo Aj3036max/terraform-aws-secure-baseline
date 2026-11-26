@@ -24,10 +24,15 @@ jobs:
       - name: Validate
         run: terraform validate
       - uses: terraform-linters/setup-tflint@v6
+        with:
+          cache: true
+      - name: TFLint init (téléchargement du plugin AWS)
+        run: tflint --init
+        env:
+          # Évite la limite d'appels anonymes à l'API GitHub lors du téléchargement du plugin
+          GITHUB_TOKEN: ${{ github.token }}
       - name: TFLint
-        run: |
-          tflint --init
-          tflint --recursive --format compact
+        run: tflint --recursive --format compact
 
   checkov:
     name: Checkov (policy as code)
