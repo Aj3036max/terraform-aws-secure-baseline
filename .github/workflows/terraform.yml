@@ -1,0 +1,47 @@
+name: Terraform security checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: fmt / validate / tflint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.17.2"
+      - name: Format
+        run: terraform fmt -check -recursive
+      - name: Init (sans backend, aucun accès AWS nécessaire)
+        run: terraform init -backend=false
+      - name: Validate
+        run: terraform validate
+      - uses: terraform-linters/setup-tflint@v4
+      - name: TFLint
+        run: |
+          tflint --init
+          tflint --recursive --format compact
+
+  checkov:
+    name: Checkov (policy as code)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install checkov
+      - name: Checkov scan
+        run: checkov -d . --config-file .checkov.yml --output cli --output-file-path console,checkov.sarif --output sarif
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: checkov-report
+          path: checkov.sarif

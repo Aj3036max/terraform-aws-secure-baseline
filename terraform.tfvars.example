@@ -1,0 +1,9 @@
+# Copier en terraform.tfvars puis adapter. terraform.tfvars est ignoré par git.
+region             = "eu-west-3"
+project            = "secure-baseline"
+owner              = "Aj3036max"
+vpc_cidr           = "10.20.0.0/16"
+az_count           = 2
+alert_email        = "ton-email@exemple.com"
+monthly_budget_usd = 10
+log_retention_days = 365

@@ -1,0 +1,29 @@
+# Configuration Checkov. Chaque exception est justifiée : on n'ignore jamais un contrôle "pour faire passer la CI".
+framework:
+  - terraform
+download-external-modules: false
+compact: true
+quiet: true
+skip-check:
+  # --- Choix d'architecture (compte unique, lab mono-région) ---
+  # GuardDuty au niveau AWS Organizations : baseline pour un compte unique, pas d'organisation.
+  - CKV2_AWS_3
+  # Réplication S3 cross-region : double le coût, hors périmètre d'un socle mono-région.
+  - CKV_AWS_144
+  # Liste d'AZ non épinglée : le module prend un nombre fixe d'AZ via slice(..., 0, var.az_count).
+  - CKV_AWS_394
+
+  # --- Redondances (le besoin est déjà couvert autrement) ---
+  # SNS par trail CloudTrail : les alertes passent par metric filters CloudWatch -> alarmes -> SNS.
+  - CKV_AWS_252
+  # Notifications d'évènements S3 sur le bucket CloudTrail : aucun consommateur ; les logs sont lus via CloudWatch.
+  - CKV2_AWS_62
+  # Access logging du bucket CloudTrail : imposerait un 2e bucket de logs (récursion) ; CloudTrail est la piste d'audit.
+  - CKV_AWS_18
+
+  # --- Faux positifs sur la politique de clé KMS ---
+  # Dans une key policy, "Resource: *" désigne la clé elle-même, et le statement "kms:*" pour le root du compte
+  # est le statement par défaut recommandé par AWS (sans lui, la clé peut devenir ingérable).
+  - CKV_AWS_109
+  - CKV_AWS_111
+  - CKV_AWS_356
